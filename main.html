@@ -534,3 +534,70 @@
 
       document.getElementById('btn-record').addEventListener('click', async function () {
         hideMsg('record-msg');
+        const band = parseInt(document.getElementById('record-band').value, 10) || 0;
+        const score = parseInt(document.getElementById('record-score').value, 10) || 0;
+        let hashStr = (document.getElementById('record-hash').value || '').trim();
+        if (!hashStr || hashStr.length < 66) hashStr = ZERO_BYTES32;
+        const valueWei = document.getElementById('record-value').value.trim() || '0';
+        const addr = getContractAddr();
+        if (!addr || !signer) { showMsg('record-msg', 'Connect wallet and set contract.', 'err'); return; }
+        try {
+          const abi = ['function recordMoodSnapshot(uint8 sentimentBand, uint256 calmScore, bytes32 promptHash) payable returns (uint256 snapshotId)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const opts = valueWei !== '0' ? { value: BigInt(valueWei) } : {};
+          const tx = await c.recordMoodSnapshot(band, score, hashStr, opts);
+          showMsg('record-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('record-msg', 'Snapshot recorded.', 'ok');
+          await refreshStats();
+        } catch (e) { showMsg('record-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-batch').addEventListener('click', async function () {
+        hideMsg('batch-msg');
+        const bandsStr = (document.getElementById('batch-bands').value || '').trim();
+        const scoresStr = (document.getElementById('batch-scores').value || '').trim();
+        const valueWei = (document.getElementById('batch-value').value || '0').trim();
+        const bandsArr = bandsStr.split(',').map(function (x) { return parseInt(x.trim(), 10) || 0; });
+        const scoresArr = scoresStr.split(',').map(function (x) { return parseInt(x.trim(), 10) || 0; });
+        if (bandsArr.length !== scoresArr.length || bandsArr.length === 0) { showMsg('batch-msg', 'Same number of bands and scores required.', 'err'); return; }
+        const hashes = bandsArr.map(function () { return ZERO_BYTES32; });
+        const addr = getContractAddr();
+        if (!addr || !signer) { showMsg('batch-msg', 'Connect wallet and set contract.', 'err'); return; }
+        try {
+          const abi = ['function recordMoodSnapshotBatch(uint8[] sentimentBands, uint256[] calmScores, bytes32[] promptHashes) payable returns (uint256[] snapshotIds)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const opts = valueWei !== '0' ? { value: BigInt(valueWei) * BigInt(bandsArr.length) } : {};
+          const tx = await c.recordMoodSnapshotBatch(bandsArr, scoresArr, hashes, opts);
+          showMsg('batch-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('batch-msg', 'Batch recorded.', 'ok');
+          await refreshStats();
+        } catch (e) { showMsg('batch-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-refresh-my').addEventListener('click', function () { loadMySnapshots(); refreshStats(); });
+
+      document.getElementById('btn-attest').addEventListener('click', async function () {
+        hideMsg('attest-msg');
+        const id = document.getElementById('attest-snapshot-id').value.trim();
+        const addr = getContractAddr();
+        if (!addr || !signer || !id) { showMsg('attest-msg', 'Connect wallet, set contract, and enter snapshot ID.', 'err'); return; }
+        try {
+          const abi = ['function attestSnapshot(uint256 snapshotId)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const tx = await c.attestSnapshot(BigInt(id));
+          showMsg('attest-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('attest-msg', 'Attested.', 'ok');
+          loadMySnapshots();
+        } catch (e) { showMsg('attest-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-attest-batch').addEventListener('click', async function () {
+        hideMsg('attest-batch-msg');
+        const idsStr = (document.getElementById('attest-batch-ids').value || '').trim();
+        const ids = idsStr.split(',').map(function (x) { return BigInt(x.trim()); }).filter(function (n) { return n > 0n; });
+        const addr = getContractAddr();
+        if (!addr || !signer || ids.length === 0) { showMsg('attest-batch-msg', 'Connect wallet, set contract, and enter snapshot IDs.', 'err'); return; }
+        try {
