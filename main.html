@@ -132,3 +132,70 @@
       </div>
       <div class="header-right">
         <span id="wallet-addr" class="wallet-addr">Not connected</span>
+        <input type="text" id="contract-address" class="contract-in" placeholder="Contract 0x..." />
+        <button type="button" id="btn-connect" class="btn primary">Connect</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Your mood, on-chain.</h1>
+      <p>Record mood snapshots, track sentiment bands, and earn calm points. Frankie is your AI mood companion powered by the Mood Detector contract.</p>
+    </section>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Snapshots</div><div class="value" id="stat-snapshots">—</div></div>
+      <div class="stat-card"><div class="label">My snapshots</div><div class="value calm" id="stat-my">—</div></div>
+      <div class="stat-card"><div class="label">Calm balance</div><div class="value calm" id="stat-calm">—</div></div>
+      <div class="stat-card"><div class="label">Prompts</div><div class="value" id="stat-prompts">—</div></div>
+      <div class="stat-card"><div class="label">Status</div><div class="value" id="stat-paused">—</div></div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="record">Record mood</button>
+      <button type="button" class="tab" data-tab="my">My snapshots</button>
+      <button type="button" class="tab" data-tab="bands">Bands</button>
+      <button type="button" class="tab" data-tab="roles">Roles (Keeper / Oracle)</button>
+      <button type="button" class="tab" data-tab="config">Config</button>
+    </div>
+
+    <div id="panel-record" class="panel visible">
+      <div class="card">
+        <h3>Record mood snapshot</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.85rem;">Choose a sentiment band (0–15) and calm score (0–10000). Optional fee sent to treasury. Prompt hash can be zero.</p>
+        <label>Sentiment band (0–15)</label>
+        <input type="number" id="record-band" class="input" min="0" max="15" value="0" />
+        <label>Calm score (0–10000)</label>
+        <input type="number" id="record-score" class="input" min="0" max="10000" value="5000" />
+        <label>Prompt hash (hex, or leave 0x0)</label>
+        <input type="text" id="record-hash" class="input" placeholder="0x0000000000000000000000000000000000000000000000000000000000000000" />
+        <label>Value to send (wei, optional fee)</label>
+        <input type="text" id="record-value" class="input" placeholder="0" value="0" />
+        <div class="actions">
+          <button type="button" id="btn-record" class="btn primary">Record snapshot</button>
+        </div>
+        <div id="record-msg" class="msg" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h3>Record batch</h3>
+        <label>Bands (comma-separated, e.g. 0,1,2)</label>
+        <input type="text" id="batch-bands" class="input" placeholder="0,1,2" />
+        <label>Scores (comma-separated, e.g. 3000,5000,7000)</label>
+        <input type="text" id="batch-scores" class="input" placeholder="3000,5000,7000" />
+        <label>Value to send (wei)</label>
+        <input type="text" id="batch-value" class="input" placeholder="0" value="0" />
+        <button type="button" id="btn-batch" class="btn calm small">Record batch</button>
+        <div id="batch-msg" class="msg" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="panel-my" class="panel">
+      <div class="card">
+        <h3>My mood snapshots</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.75rem;">Your recorded snapshots. Attested ones are marked.</p>
+        <div class="actions"><button type="button" id="btn-refresh-my" class="btn calm small">Refresh</button></div>
+        <ul id="my-snapshots-list" class="snapshot-list"></ul>
+        <div id="my-snapshots-empty" style="display:none; color: var(--text-dim); font-size: 0.88rem;">No snapshots yet. Record one from the Record mood tab.</div>
+      </div>
+      <div class="card">
+        <h4>Calm balance</h4>
+        <p id="my-calm-balance" style="font-family: 'IBM Plex Mono', monospace; color: var(--calm);">—</p>
