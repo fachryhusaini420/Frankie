@@ -199,3 +199,70 @@
       <div class="card">
         <h4>Calm balance</h4>
         <p id="my-calm-balance" style="font-family: 'IBM Plex Mono', monospace; color: var(--calm);">—</p>
+      </div>
+    </div>
+
+    <div id="panel-bands" class="panel">
+      <div class="card">
+        <h3>Sentiment bands</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.75rem;">Configured bands (min–max score) and snapshot counts per band.</p>
+        <div id="bands-grid" class="bands-grid"></div>
+      </div>
+    </div>
+
+    <div id="panel-roles" class="panel">
+      <div class="card">
+        <h3>Attest snapshot (Sentiment Oracle)</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.75rem;">Oracle can mark a snapshot as attested.</p>
+        <label>Snapshot ID</label>
+        <input type="text" id="attest-snapshot-id" class="input" placeholder="1" />
+        <button type="button" id="btn-attest" class="btn calm small">Attest</button>
+        <div id="attest-msg" class="msg" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h3>Attest batch (Sentiment Oracle)</h3>
+        <label>Snapshot IDs (comma-separated)</label>
+        <input type="text" id="attest-batch-ids" class="input" placeholder="1,2,3" />
+        <button type="button" id="btn-attest-batch" class="btn calm small">Attest batch</button>
+        <div id="attest-batch-msg" class="msg" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h3>Store companion prompt (Companion Keeper)</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.75rem;">Store a prompt content hash and band hint.</p>
+        <label>Content hash (bytes32 hex)</label>
+        <input type="text" id="prompt-hash" class="input" placeholder="0x..." />
+        <label>Band hint (0–15)</label>
+        <input type="number" id="prompt-band" class="input" min="0" max="15" value="0" />
+        <button type="button" id="btn-store-prompt" class="btn primary small">Store prompt</button>
+        <div id="store-prompt-msg" class="msg" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h3>Award calm points (Pulse Relay)</h3>
+        <label>User address</label>
+        <input type="text" id="award-user" class="input" placeholder="0x..." />
+        <label>Amount</label>
+        <input type="text" id="award-amount" class="input" placeholder="100" value="0" />
+        <button type="button" id="btn-award-calm" class="btn calm small">Award calm</button>
+        <div id="award-calm-msg" class="msg" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h3>Withdraw treasury (Companion Keeper)</h3>
+        <label>To address</label>
+        <input type="text" id="withdraw-to" class="input" placeholder="0x..." />
+        <label>Amount (wei)</label>
+        <input type="text" id="withdraw-amount" class="input" placeholder="0" value="0" />
+        <button type="button" id="btn-withdraw-treasury" class="btn primary small">Withdraw</button>
+        <div id="withdraw-treasury-msg" class="msg" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="panel-config" class="panel">
+      <div class="card">
+        <h3>Contract config</h3>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.75rem;">Mood Detector immutable addresses and settings.</p>
+        <div class="config-grid" id="config-grid"></div>
+        <h4>Immutable addresses</h4>
+        <div class="config-grid">
+          <div class="config-item"><span class="k">Companion Keeper</span><div class="v" id="cfg-keeper">—</div></div>
+          <div class="config-item"><span class="k">Mood Vault</span><div class="v" id="cfg-vault">—</div></div>
+          <div class="config-item"><span class="k">Sentiment Oracle</span><div class="v" id="cfg-oracle">—</div></div>
