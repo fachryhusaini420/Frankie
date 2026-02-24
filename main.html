@@ -333,3 +333,70 @@
         } catch (e) { showMsg('record-msg', e.message || 'Connect failed', 'err'); }
       }
 
+      async function refreshStats() {
+        const addr = getContractAddr();
+        if (!addr) {
+          statSnapshots.textContent = '—';
+          statMy.textContent = '—';
+          statCalm.textContent = '—';
+          statPrompts.textContent = '—';
+          statPaused.textContent = '—';
+          return;
+        }
+        try {
+          const abi = [
+            'function getFrontendConfig() view returns (address keeper_, address vault_, address oracle_, address treasury_, address relay_, uint256 calmFeeWei_, uint256 treasuryBalance_, bool paused_, uint256 snapshotCount_, uint256 promptCount_, uint256 deployBlock_)',
+            'function getSnapshotIdsByUser(address) view returns (uint256[])',
+            'function userCalmBalance(address) view returns (uint256)'
+          ];
+          const c = new ethers.Contract(addr, abi, provider || ethers.getDefaultProvider());
+          const cfg = await c.getFrontendConfig();
+          statSnapshots.textContent = cfg.snapshotCount_.toString();
+          statPrompts.textContent = cfg.promptCount_.toString();
+          statPaused.textContent = cfg.paused_ ? 'Paused' : 'Active';
+          if (userAddress) {
+            const ids = await c.getSnapshotIdsByUser(userAddress);
+            statMy.textContent = Array.isArray(ids) ? ids.length : 0;
+            const bal = await c.userCalmBalance(userAddress);
+            statCalm.textContent = bal.toString();
+          } else {
+            statMy.textContent = '—';
+            statCalm.textContent = '—';
+          }
+        } catch (e) {
+          statSnapshots.textContent = '—';
+          statMy.textContent = '—';
+          statCalm.textContent = '—';
+          statPrompts.textContent = '—';
+          statPaused.textContent = '—';
+        }
+      }
+
+      function renderMySnapshots(snapshots) {
+        const list = document.getElementById('my-snapshots-list');
+        const empty = document.getElementById('my-snapshots-empty');
+        list.innerHTML = '';
+        if (!snapshots || snapshots.length === 0) { empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+        snapshots.forEach(function (s) {
+          const li = document.createElement('li');
+          li.innerHTML = '<span class="id">#' + (s.id || s.snapshotId) + '</span>' +
+            '<div class="meta">Band ' + (s.band ?? s.sentimentBand) + ' · Score ' + (s.calmScore ?? s.score) + ' · Block ' + (s.atBlock ?? s.block) + '</div>' +
+            '<span class="badge ' + ((s.attested) ? 'attested' : 'pending') + '">' + (s.attested ? 'Attested' : 'Pending') + '</span>';
+          list.appendChild(li);
+        });
+      }
+
+      async function loadMySnapshots() {
+        const addr = getContractAddr();
+        if (!addr || !userAddress) { renderMySnapshots([]); return; }
+        try {
+          const abi = [
+            'function getSnapshotIdsByUser(address) view returns (uint256[])',
+            'function getSnapshotsByIds(uint256[]) view returns (address[] users, uint8[] bands, uint256[] scores, bytes32[] hashes, uint256[] blocks, bool[] attestedFlags)'
+          ];
+          const c = new ethers.Contract(addr, abi, provider || ethers.getDefaultProvider());
+          const ids = await c.getSnapshotIdsByUser(userAddress);
+          const arr = Array.isArray(ids) ? ids : [];
+          if (arr.length === 0) { renderMySnapshots([]); return; }
+          const slice = arr.slice(-20);
