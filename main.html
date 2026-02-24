@@ -266,3 +266,70 @@
           <div class="config-item"><span class="k">Companion Keeper</span><div class="v" id="cfg-keeper">—</div></div>
           <div class="config-item"><span class="k">Mood Vault</span><div class="v" id="cfg-vault">—</div></div>
           <div class="config-item"><span class="k">Sentiment Oracle</span><div class="v" id="cfg-oracle">—</div></div>
+          <div class="config-item"><span class="k">Calm Treasury</span><div class="v" id="cfg-treasury">—</div></div>
+          <div class="config-item"><span class="k">Pulse Relay</span><div class="v" id="cfg-relay">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.25rem;">
+      <h3>Global stats</h3>
+      <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.6rem;">Total snapshots, prompts, treasury, and attestation rate (when contract is set).</p>
+      <div class="stats-row" id="global-stats-row">
+        <div class="stat-card"><div class="label">Total snapshots</div><div class="value" id="global-snapshots">—</div></div>
+        <div class="stat-card"><div class="label">Total prompts</div><div class="value" id="global-prompts">—</div></div>
+        <div class="stat-card"><div class="label">Treasury (wei)</div><div class="value calm" id="global-treasury">—</div></div>
+        <div class="stat-card"><div class="label">Attested / Total</div><div class="value" id="global-attested">—</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 1rem;">
+      <h3>About Frankie</h3>
+      <p style="color: var(--text-dim); font-size: 0.88rem; line-height: 1.55;">Frankie is the web interface for the Mood Detector (MDT) contract. Record mood snapshots with a sentiment band (0–15) and calm score (0–10000). The Sentiment Oracle can attest snapshots; the Companion Keeper configures bands and stores companion prompts; the Pulse Relay awards calm points to users. Treasury receives optional fees on record. All role addresses are set at deployment and are immutable. Safe for EVM mainnets when deployed with verified addresses.</p>
+      <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 0.5rem;">Constants: MDT_SCORE_SCALE 10000, MDT_MAX_SENTIMENT_BANDS 16, MDT_MAX_SNAPSHOTS_PER_USER 128, MDT_BATCH_SIZE 32, MDT_BAND_LOCK_BLOCKS 64.</p>
+    </div>
+    <p class="footer-note">Frankie · Mood Detector (MDT) · AI mood companion · Not financial advice.</p>
+  </div>
+
+  <script>
+    (function () {
+      const MDT_SCORE_SCALE = 10000;
+      const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
+      let provider = null;
+      let signer = null;
+      let userAddress = null;
+      let contractAddress = null;
+
+      const contractIn = document.getElementById('contract-address');
+      const walletEl = document.getElementById('wallet-addr');
+      const statSnapshots = document.getElementById('stat-snapshots');
+      const statMy = document.getElementById('stat-my');
+      const statCalm = document.getElementById('stat-calm');
+      const statPrompts = document.getElementById('stat-prompts');
+      const statPaused = document.getElementById('stat-paused');
+
+      function showMsg(id, text, type) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.className = 'msg ' + (type || 'info');
+        el.style.display = 'block';
+      }
+      function hideMsg(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+      function getContractAddr() { return (contractIn.value || '').trim() || contractAddress; }
+
+      async function connectWallet() {
+        try {
+          if (!window.ethereum) { showMsg('record-msg', 'No Ethereum provider.', 'err'); return; }
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts.length) {
+            userAddress = accounts[0];
+            walletEl.textContent = userAddress.slice(0, 6) + '…' + userAddress.slice(-4);
+            provider = new ethers.BrowserProvider(window.ethereum);
+            signer = await provider.getSigner();
+            if (contractIn.value.trim()) contractAddress = contractIn.value.trim();
+            await refreshStats();
+          }
+        } catch (e) { showMsg('record-msg', e.message || 'Connect failed', 'err'); }
+      }
+
