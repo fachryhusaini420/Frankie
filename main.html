@@ -601,3 +601,70 @@
         const addr = getContractAddr();
         if (!addr || !signer || ids.length === 0) { showMsg('attest-batch-msg', 'Connect wallet, set contract, and enter snapshot IDs.', 'err'); return; }
         try {
+          const abi = ['function attestSnapshotBatch(uint256[] snapshotIds)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const tx = await c.attestSnapshotBatch(ids);
+          showMsg('attest-batch-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('attest-batch-msg', 'Batch attested.', 'ok');
+          loadMySnapshots();
+        } catch (e) { showMsg('attest-batch-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-store-prompt').addEventListener('click', async function () {
+        hideMsg('store-prompt-msg');
+        const hashStr = (document.getElementById('prompt-hash').value || '0x0000000000000000000000000000000000000000000000000000000000000000').trim();
+        const band = parseInt(document.getElementById('prompt-band').value, 10) || 0;
+        const addr = getContractAddr();
+        if (!addr || !signer) { showMsg('store-prompt-msg', 'Connect wallet and set contract.', 'err'); return; }
+        try {
+          const abi = ['function storeCompanionPrompt(bytes32 contentHash, uint8 bandHint) returns (uint256 promptId)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const tx = await c.storeCompanionPrompt(hashStr, band);
+          showMsg('store-prompt-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('store-prompt-msg', 'Prompt stored.', 'ok');
+          refreshStats();
+        } catch (e) { showMsg('store-prompt-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-award-calm').addEventListener('click', async function () {
+        hideMsg('award-calm-msg');
+        const user = (document.getElementById('award-user').value || '').trim();
+        const amount = (document.getElementById('award-amount').value || '0').trim();
+        const addr = getContractAddr();
+        if (!addr || !signer || !user) { showMsg('award-calm-msg', 'Connect wallet, set contract, and enter user address.', 'err'); return; }
+        try {
+          const abi = ['function awardCalmPoints(address user, uint256 amount)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const tx = await c.awardCalmPoints(user, BigInt(amount));
+          showMsg('award-calm-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('award-calm-msg', 'Calm points awarded.', 'ok');
+          if (user === userAddress) refreshStats();
+        } catch (e) { showMsg('award-calm-msg', e.message || 'Failed', 'err'); }
+      });
+
+      document.getElementById('btn-withdraw-treasury').addEventListener('click', async function () {
+        hideMsg('withdraw-treasury-msg');
+        const to = (document.getElementById('withdraw-to').value || '').trim();
+        const amount = (document.getElementById('withdraw-amount').value || '0').trim();
+        const addr = getContractAddr();
+        if (!addr || !signer || !to || amount === '0') { showMsg('withdraw-treasury-msg', 'Connect wallet, set contract, to address, and amount.', 'err'); return; }
+        try {
+          const abi = ['function withdrawTreasury(address to, uint256 amountWei)'];
+          const c = new ethers.Contract(addr, abi, signer);
+          const tx = await c.withdrawTreasury(to, BigInt(amount));
+          showMsg('withdraw-treasury-msg', 'Tx: ' + tx.hash, 'ok');
+          await tx.wait();
+          showMsg('withdraw-treasury-msg', 'Withdrawn.', 'ok');
+          refreshStats();
+        } catch (e) { showMsg('withdraw-treasury-msg', e.message || 'Failed', 'err'); }
+      });
+
+      refreshStats();
+    })();
+  </script>
+</body>
+</html>
+
