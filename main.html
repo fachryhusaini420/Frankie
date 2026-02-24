@@ -467,3 +467,70 @@
         const keeper = '0xCe1F9a4b7D2e5A8c0B3d6F9a2E5c8B1d4F7a0C3e6';
         const vault = '0xDf2A0b5c8E3d6F9a1B4e7C0d3F6a9B2e5C8d1F4a7';
         const oracle = '0xE0b3C6d9F2a5E8c1B4e7D0a3F6c9B2e5D8f1A4c7';
+        const treasury = '0xF1c4D7e0A3b6F9c2E5a8D1f4B7e0C3a6D9f2B5e8';
+        const relay = '0xA2d5E8f1B4c7E0a3D6f9B2e5C8d1F4a7E0b3D6f9';
+        document.getElementById('cfg-keeper').textContent = keeper;
+        document.getElementById('cfg-vault').textContent = vault;
+        document.getElementById('cfg-oracle').textContent = oracle;
+        document.getElementById('cfg-treasury').textContent = treasury;
+        document.getElementById('cfg-relay').textContent = relay;
+        const grid = document.getElementById('config-grid');
+        grid.innerHTML = '';
+        if (addr) {
+          try {
+            const abi = ['function getFrontendConfig() view returns (address keeper_, address vault_, address oracle_, address treasury_, address relay_, uint256 calmFeeWei_, uint256 treasuryBalance_, bool paused_, uint256 snapshotCount_, uint256 promptCount_, uint256 deployBlock_)'];
+            const c = new ethers.Contract(addr, abi, provider || ethers.getDefaultProvider());
+            const cfg = await c.getFrontendConfig();
+            const items = [
+              { k: 'Calm fee (wei)', v: cfg.calmFeeWei_.toString() },
+              { k: 'Treasury balance', v: cfg.treasuryBalance_.toString() },
+              { k: 'Deploy block', v: cfg.deployBlock_.toString() },
+              { k: 'Snapshot count', v: cfg.snapshotCount_.toString() },
+              { k: 'Prompt count', v: cfg.promptCount_.toString() },
+              { k: 'Paused', v: cfg.paused_ ? 'Yes' : 'No' }
+            ];
+            items.forEach(function (it) {
+              const div = document.createElement('div');
+              div.className = 'config-item';
+              div.innerHTML = '<span class="k">' + it.k + '</span><div class="v">' + it.v + '</div>';
+              grid.appendChild(div);
+            });
+          } catch (_) {}
+        }
+      }
+
+      document.getElementById('btn-connect').addEventListener('click', connectWallet);
+
+      document.querySelectorAll('.tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+          document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('visible'); });
+          tab.classList.add('active');
+          const panel = document.getElementById('panel-' + tab.getAttribute('data-tab'));
+          if (panel) panel.classList.add('visible');
+          if (tab.getAttribute('data-tab') === 'my') loadMySnapshots();
+          if (tab.getAttribute('data-tab') === 'bands') loadBands();
+          if (tab.getAttribute('data-tab') === 'config') { loadConfig(); loadGlobalStats(); }
+        });
+      });
+
+      async function loadGlobalStats() {
+        const addr = getContractAddr();
+        const gs = document.getElementById('global-snapshots');
+        const gp = document.getElementById('global-prompts');
+        const gt = document.getElementById('global-treasury');
+        const ga = document.getElementById('global-attested');
+        if (!addr) { gs.textContent = '—'; gp.textContent = '—'; gt.textContent = '—'; ga.textContent = '—'; return; }
+        try {
+          const abi = ['function getGlobalStats() view returns (uint256 totalSnapshotCount, uint256 totalPromptCount, uint256 totalTreasuryWei, uint256 totalCalmScoreSum, uint256 attestedCount)'];
+          const c = new ethers.Contract(addr, abi, provider || ethers.getDefaultProvider());
+          const res = await c.getGlobalStats();
+          gs.textContent = res.totalSnapshotCount.toString();
+          gp.textContent = res.totalPromptCount.toString();
+          gt.textContent = res.totalTreasuryWei.toString();
+          ga.textContent = res.attestedCount.toString() + ' / ' + res.totalSnapshotCount.toString();
+        } catch (e) { gs.textContent = '—'; gp.textContent = '—'; gt.textContent = '—'; ga.textContent = '—'; }
+      }
+
+      document.getElementById('btn-record').addEventListener('click', async function () {
+        hideMsg('record-msg');
